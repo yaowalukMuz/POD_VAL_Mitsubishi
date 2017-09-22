@@ -21,6 +21,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import okhttp3.FormBody;
+import okhttp3.Response;
 
 public class PlanDeliveryActivity extends AppCompatActivity {
 
@@ -97,8 +98,10 @@ public class PlanDeliveryActivity extends AppCompatActivity {
                         .build();
 
                 Request.Builder builder = new Request.Builder();
-                //Request request = builder.url(MyConstant.)
-
+                Request request = builder.url(MyConstant.urlUpdateArrivalPlan).post(requestBody).build();
+                Response response = okHttpClient.newCall(request).execute();
+               // return response.body().string();
+                return null;
             }catch (Exception e) {
                 Log.d("Tag", "e doInBack ==>" + e.toString()+"line::"+e.getStackTrace()[0].getLineNumber());
                 return null;
