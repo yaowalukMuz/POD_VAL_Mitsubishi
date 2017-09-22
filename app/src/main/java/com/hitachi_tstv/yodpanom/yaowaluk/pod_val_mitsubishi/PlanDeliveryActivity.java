@@ -98,7 +98,7 @@ public class PlanDeliveryActivity extends AppCompatActivity {
                         .build();
 
                 Request.Builder builder = new Request.Builder();
-                Request request = builder.url(MyConstant.urlUpdateArrivalPlan).post(requestBody).build();
+                Request request = builder.url(MyConstant.urlUpdateArrival).post(requestBody).build();
                 Response response = okHttpClient.newCall(request).execute();
                // return response.body().string();
                 return null;
