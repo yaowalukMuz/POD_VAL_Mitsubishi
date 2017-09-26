@@ -154,7 +154,7 @@
             android:paddingEnd="20dp"
             android:paddingStart="20dp"
             android:text="Arrival"
-            android:textSize="@dimen/txt_h3"
+            android:textSize="18sp"
             android:textStyle="bold" />
 
         <Button
@@ -168,7 +168,7 @@
             android:paddingEnd="20dp"
             android:paddingStart="20dp"
             android:text="DEPARTURE"
-            android:textSize="@dimen/txt_h3"
+            android:textSize="18sp"
             android:textStyle="bold" />
     </LinearLayout>
 

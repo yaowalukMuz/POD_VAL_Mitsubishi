@@ -1,5 +1,6 @@
 package com.hitachi_tstv.yodpanom.yaowaluk.pod_val_mitsubishi;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -8,6 +9,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
@@ -58,9 +63,51 @@ public class PlanDeliveryActivity extends AppCompatActivity {
         lisPDAPlan.setAdapter(planDeliveryAdapter);
 
         factoryTextviewPD.setText(planNameString);
-
+        SynDeliveryData synDeliveryData = new SynDeliveryData(PlanDeliveryActivity.this);
+        synDeliveryData.execute();
 
     }
+
+    private class SynDeliveryData extends AsyncTask<String, Void, String> {
+        private Context context;
+
+        public SynDeliveryData(Context context) {
+            this.context = context;
+        }
+
+        @Override
+        protected String doInBackground(String... strings) {
+
+            try{
+                OkHttpClient  okHttpClient  = new OkHttpClient();
+                RequestBody requestBody  = new FormBody.Builder()
+                        .add("isAdd","true")
+                        .add("planDtl2Id","1")
+                        .build();
+                Request.Builder builder = new Request.Builder();
+                Request request = builder.url(MyConstant.urlGetPlanTrip).post(requestBody).build();
+                Response response = okHttpClient.newCall(request).execute();
+                return response.body().string();
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.d("Tag", "IoException..." + e.getStackTrace()[0].getLineNumber());
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            Log.d("Tag","OnpostExecute:::--->"+s);
+
+            //JSONArray jsonArray = new JSONArray(s);
+
+
+
+
+        }
+    }
+
 
     @OnClick({R.id.btn_arrival, R.id.btn_confirm})
     public void onViewClicked(View view) {
@@ -68,17 +115,99 @@ public class PlanDeliveryActivity extends AppCompatActivity {
             case R.id.btn_arrival:
                 UtilityClass utilityClass = new UtilityClass(PlanDeliveryActivity.this);
 
+                Log.d("Tag","----Lat.."+utilityClass.getLatString());
+
+                if(utilityClass.setLatLong(0)){
+
+
+                    SynUpdateArrival synUpdateArrival = new SynUpdateArrival(utilityClass.getLatString(), utilityClass.getLongString(), utilityClass.getTimeString());
+                    synUpdateArrival.execute();
+                }else{
+                   // Toast.makeText(getBaseContext(),getResources().getText(R.string.err_gps1),Toast.LENGTH_SHORT).show();
+                }
+
                 break;
             case R.id.btn_confirm:
+                UtilityClass utilityClass1 = new UtilityClass(PlanDeliveryActivity.this);
+                if(utilityClass1.setLatLong(0)){
+                    SynUpdateDeparture synUpdateDeparture = new SynUpdateDeparture(utilityClass1.getLatString(),utilityClass1.getLongString(),utilityClass1.getTimeString());
+                    synUpdateDeparture.execute();
+                }else{
+                    Toast.makeText(getBaseContext(),getResources().getText(R.string.err_gps1),Toast.LENGTH_SHORT).show();
+                }
+
                 break;
         }
+
+
     }
 
 
-    private class SynUpdateArrivalPlan extends AsyncTask<Void, Void, String> {
+    private class SynUpdateArrival extends AsyncTask<Void, Void, String> {
         String latString,longString,timeString;
 
-        public SynUpdateArrivalPlan(String latString, String longString, String timeString) {
+        public SynUpdateArrival(String latString, String longString, String timeString) {
+            this.latString = latString;
+            this.longString = longString;
+            this.timeString = timeString;
+        }
+
+        @Override
+        protected String doInBackground(Void... voids) {
+            try {
+                Log.d("Tag", "Lat/Long : Time ==> " + latString+ "/" + longString + " : " + timeString);
+                OkHttpClient okHttpClient = new OkHttpClient();
+                RequestBody requestBody  =  new FormBody.Builder()
+                        .add("isAdd","true")
+                        .add("drv_username", "abc")
+                        .add("planDtl2_id", "2")
+                        .add("lat", latString)
+                        .add("lng", longString)
+//                       .add("user_name", loginStrings[1])
+//                       .add("planDtl2_id", planDtl2IdString)
+//                       .add("gps_lat", latString)
+//                       .add("gps_lon", longString)
+//                       .add("timeStamp", timeString)
+                        .build();
+
+                Request.Builder builder = new Request.Builder();
+                Request request = builder.url(MyConstant.urlUpdateArrival).post(requestBody).build();
+                Response response = okHttpClient.newCall(request).execute();
+                return response.body().string();
+
+            }catch (Exception e) {
+                Log.d("Tag", "e doInBack ==>" + e.toString()+"line::"+e.getStackTrace()[0].getLineNumber());
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            Log.d("Tag","onPostExecute:::-----> "+s);
+            if(s.equals("Success")){
+
+                runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getBaseContext(),R.string.arrival_text,Toast.LENGTH_LONG).show();
+                }
+            });
+            }else{
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getBaseContext(), getResources().getText(R.string.err_arr), Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+        }
+    }
+
+    private class SynUpdateDeparture extends AsyncTask<Void, Void, String> {
+        String latString,longString,timeString;
+
+        public SynUpdateDeparture(String latString, String longString, String timeString) {
             this.latString = latString;
             this.longString = longString;
             this.timeString = timeString;
@@ -88,33 +217,48 @@ public class PlanDeliveryActivity extends AppCompatActivity {
         protected String doInBackground(Void... voids) {
             try {
                 OkHttpClient okHttpClient = new OkHttpClient();
-                RequestBody requestBody  =  new FormBody.Builder()
-                        .add("isAdd","true")
-                        .add("user_name", loginStrings[1])
-                        .add("planDtl2Id", planDtl2IdString)
-                        .add("gps_lat", latString)
-                        .add("gps_lon", longString)
-                        .add("timeStamp", timeString)
+                RequestBody requestBody = new FormBody.Builder()
+                        .add("isAdd", "true")
+                        .add("Driver_Name", "abc")
+                        .add("PlanDtl2_ID", "2")
+//                      .add("user_name", loginStrings[1])
+//                      .add("planDtl2Id", planDtl2IdString)
+                        .add("lat", latString)
+                        .add("lon", longString)
                         .build();
 
                 Request.Builder builder = new Request.Builder();
-                Request request = builder.url(MyConstant.urlUpdateArrival).post(requestBody).build();
+                Request request = builder.url(MyConstant.urlUpdateDeparture).post(requestBody).build();
                 Response response = okHttpClient.newCall(request).execute();
-               // return response.body().string();
-                return null;
+                return response.body().string();
+
             }catch (Exception e) {
                 Log.d("Tag", "e doInBack ==>" + e.toString()+"line::"+e.getStackTrace()[0].getLineNumber());
                 return null;
             }
 
-
         }
-    }
 
-    private class SynUpdateDeparturePlan extends AsyncTask<Void, Void, String> {
         @Override
-        protected String doInBackground(Void... voids) {
-            return null;
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            Log.d("Tag","onPostExecute:::---->Departure:::: "+s);
+            if (s.equals("OK")) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getBaseContext(),R.string.departure_text,Toast.LENGTH_LONG).show();
+                    }
+                });
+            } else {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getBaseContext(), getResources().getText(R.string.err_departure), Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+
         }
     }
 
